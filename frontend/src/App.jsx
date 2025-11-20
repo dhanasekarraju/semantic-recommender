@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 export default function App() {
-    const [q, setQ] = useState('Formal shirt')
+    const [q, setQ] = useState('outfit for tropical vacation')
     const [results, setResults] = useState([])
     const [loading, setLoading] = useState(false)
     const [rerank, setRerank] = useState(false)
@@ -14,7 +14,7 @@ export default function App() {
             const res = await fetch('/api/recommend', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ q, top_k: 6, rerank })
+                body: JSON.stringify({ q, top_k: 10, rerank })
             })
             const data = await res.json()
             console.log('Backend returned:', data)
@@ -81,11 +81,11 @@ export default function App() {
                 borderRadius: '16px',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
             }}>
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', alignItems: 'center', width: '100%' }}>
                     <div style={{ flex: 1, position: 'relative' }}>
                         <input
                             style={{
-                                width: '100%',
+                                width: '90%',
                                 padding: '16px 20px',
                                 fontSize: '16px',
                                 borderRadius: '12px',
@@ -100,23 +100,6 @@ export default function App() {
                             placeholder="Describe what you're looking for..."
                             disabled={loading}
                         />
-                        {loading && (
-                            <div style={{
-                                position: 'absolute',
-                                right: '15px',
-                                top: '50%',
-                                transform: 'translateY(-50%)'
-                            }}>
-                                <div style={{
-                                    width: '20px',
-                                    height: '20px',
-                                    border: '2px solid #e2e8f0',
-                                    borderTop: '2px solid #667eea',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite'
-                                }}></div>
-                            </div>
-                        )}
                     </div>
                     <button
                         onClick={submit}
@@ -131,7 +114,12 @@ export default function App() {
                             fontWeight: 600,
                             fontSize: '16px',
                             transition: 'all 0.2s ease',
-                            minWidth: '120px'
+                            minWidth: '140px',
+                            height: '52px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
                         }}
                         onMouseEnter={(e) => {
                             if (!loading && q.trim()) {
