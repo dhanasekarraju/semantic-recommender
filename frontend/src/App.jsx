@@ -291,7 +291,7 @@ export default function App() {
                                 value={q}
                                 onChange={(e) => setQ(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder={isMobile ? "What are you looking for? ✨" : "Describe what you're looking for... ✨"}
+                                placeholder={isMobile ? "What are you looking for? " : "Describe what you're looking for... "}
                                 disabled={loading}
                             />
                         </div>
