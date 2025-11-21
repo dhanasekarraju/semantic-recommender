@@ -2,8 +2,6 @@
 
 This project contains a Python FastAPI backend that builds a FAISS index from a products dataset and serves semantic recommendations, plus a minimal React frontend to demo the API.
 
-See `data/products_sample.json` for a small sample dataset.
-
 ## Quickstart (backend)
 
 1. Create virtualenv and activate:
