@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 export default function App() {
     const [q, setQ] = useState('outfit for tropical vacation')
@@ -6,15 +6,27 @@ export default function App() {
     const [loading, setLoading] = useState(false)
     const [rerank, setRerank] = useState(false)
     const [searchTime, setSearchTime] = useState(0)
+    const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
 
-    // Example queries with emojis
+    // Handle window resize
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth)
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
+
+    // Responsive breakpoints
+    const isMobile = windowWidth < 768
+    const isTablet = windowWidth >= 768 && windowWidth < 1024
+    const isDesktop = windowWidth >= 1024
+
     const exampleQueries = [
-        { text: "men's beach shorts for vacation", emoji: "🏖️" },
-        { text: "women's running shoes for gym", emoji: "👟" },
-        { text: "professional office outfit", emoji: "💼" },
-        { text: "winter coat for extreme cold", emoji: "❄️" },
-        { text: "wedding guest dress summer", emoji: "👰" },
-        { text: "comfortable walking shoes all day", emoji: "🚶" }
+        { text: "men's beach shorts", emoji: "🏖️" },
+        { text: "women's running shoes", emoji: "👟" },
+        { text: "office outfit", emoji: "💼" },
+        { text: "winter coat", emoji: "❄️" },
+        { text: "wedding dress", emoji: "👰" },
+        { text: "walking shoes", emoji: "🚶" }
     ]
 
     async function submit() {
@@ -27,14 +39,17 @@ export default function App() {
             const res = await fetch('/api/recommend', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ q, top_k: 12, rerank })
+                body: JSON.stringify({
+                    q,
+                    top_k: isMobile ? 8 : 12,
+                    rerank
+                })
             })
             const data = await res.json()
 
             const endTime = performance.now()
             setSearchTime(Math.round(endTime - startTime))
 
-            console.log('Backend returned:', data)
             setResults(data.results || [])
         } catch (e) {
             alert('Error: ' + e.message)
@@ -54,6 +69,32 @@ export default function App() {
         setTimeout(() => submit(), 100)
     }
 
+    // Responsive styles
+    const responsiveStyles = {
+        // Header
+        headerPadding: isMobile ? '40px 16px 30px' : '60px 20px 40px',
+        titleSize: isMobile ? '2.5rem' : isTablet ? '3rem' : '3.5rem',
+        subtitleSize: isMobile ? '1.1rem' : '1.3rem',
+
+        // Search Section
+        searchMaxWidth: isMobile ? '100%' : isTablet ? '90%' : '800px',
+        searchMargin: isMobile ? '-20px 16px 40px' : '-30px 20px 50px',
+        searchPadding: isMobile ? '30px 20px' : '40px',
+
+        // Input Group
+        inputGroupDirection: isMobile ? 'column' : 'row',
+        inputGroupGap: isMobile ? '12px' : '16px',
+
+        // Results Grid
+        gridColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(300px, 1fr))',
+        gridGap: isMobile ? '16px' : '24px',
+        containerPadding: isMobile ? '0 16px 40px' : '0 20px 60px',
+
+        // Cards
+        cardPadding: isMobile ? '20px' : '24px',
+        imageHeight: isMobile ? '180px' : '220px'
+    }
+
     return (
         <div style={{
             fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -61,12 +102,13 @@ export default function App() {
             backgroundColor: '#0f172a',
             background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
             minHeight: '100vh',
-            color: 'white'
+            color: 'white',
+            overflowX: 'hidden'
         }}>
             {/* Enhanced Header */}
             <div style={{
                 background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
-                padding: '60px 20px 40px',
+                padding: responsiveStyles.headerPadding,
                 textAlign: 'center',
                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
@@ -75,48 +117,53 @@ export default function App() {
                     margin: '0 auto'
                 }}>
                     <h1 style={{
-                        fontSize: '3.5rem',
+                        fontSize: responsiveStyles.titleSize,
                         fontWeight: 800,
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        marginBottom: '16px',
-                        textShadow: '0 4px 20px rgba(102, 126, 234, 0.3)'
+                        marginBottom: isMobile ? '12px' : '16px',
+                        textShadow: '0 4px 20px rgba(102, 126, 234, 0.3)',
+                        lineHeight: 1.2
                     }}>
-                        ✨ StyleSense AI
+                        {isMobile ? '✨ StyleSense' : '✨ StyleSense AI'}
                     </h1>
                     <p style={{
-                        fontSize: '1.3rem',
+                        fontSize: responsiveStyles.subtitleSize,
                         color: '#cbd5e1',
-                        marginBottom: '12px',
-                        fontWeight: 300
+                        marginBottom: isMobile ? '8px' : '12px',
+                        fontWeight: 300,
+                        lineHeight: 1.4
                     }}>
-                        Discover fashion with AI-powered semantic intelligence
+                        {isMobile ? 'AI Fashion Search' : 'Discover fashion with AI-powered semantic intelligence'}
                     </p>
 
                     {results.length > 0 && (
                         <div style={{
                             display: 'flex',
-                            gap: '20px',
+                            gap: isMobile ? '12px' : '20px',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            fontSize: '0.9rem',
-                            color: '#94a3b8'
+                            fontSize: isMobile ? '0.8rem' : '0.9rem',
+                            color: '#94a3b8',
+                            flexWrap: 'wrap'
                         }}>
                             <span style={{
                                 background: 'rgba(102, 126, 234, 0.2)',
                                 padding: '6px 12px',
                                 borderRadius: '20px',
-                                border: '1px solid rgba(102, 126, 234, 0.3)'
+                                border: '1px solid rgba(102, 126, 234, 0.3)',
+                                whiteSpace: 'nowrap'
                             }}>
-                                📊 {results.length} products found
+                                📊 {results.length} products
                             </span>
                             {searchTime > 0 && (
                                 <span style={{
                                     background: 'rgba(34, 197, 94, 0.2)',
                                     padding: '6px 12px',
                                     borderRadius: '20px',
-                                    border: '1px solid rgba(34, 197, 94, 0.3)'
+                                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                                    whiteSpace: 'nowrap'
                                 }}>
                                     ⚡ {searchTime}ms
                                 </span>
@@ -128,23 +175,24 @@ export default function App() {
 
             {/* Enhanced Search Section */}
             <div style={{
-                maxWidth: '800px',
-                margin: '-30px auto 50px',
+                maxWidth: responsiveStyles.searchMaxWidth,
+                margin: responsiveStyles.searchMargin,
                 position: 'relative',
                 zIndex: 10
             }}>
                 <div style={{
                     background: 'rgba(30, 41, 59, 0.8)',
                     backdropFilter: 'blur(20px)',
-                    padding: '40px',
-                    borderRadius: '24px',
+                    padding: responsiveStyles.searchPadding,
+                    borderRadius: isMobile ? '20px' : '24px',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                 }}>
                     <div style={{
                         display: 'flex',
-                        gap: '16px',
-                        marginBottom: '30px',
+                        flexDirection: responsiveStyles.inputGroupDirection,
+                        gap: responsiveStyles.inputGroupGap,
+                        marginBottom: isMobile ? '20px' : '30px',
                         alignItems: 'stretch'
                     }}>
                         <div style={{
@@ -155,9 +203,9 @@ export default function App() {
                         }}>
                             <div style={{
                                 position: 'absolute',
-                                left: '20px',
+                                left: isMobile ? '16px' : '20px',
                                 zIndex: 2,
-                                fontSize: '1.2rem',
+                                fontSize: isMobile ? '1.1rem' : '1.2rem',
                                 color: '#64748b'
                             }}>
                                 🔍
@@ -165,9 +213,9 @@ export default function App() {
                             <input
                                 style={{
                                     width: '100%',
-                                    padding: '20px 20px 20px 50px',
-                                    fontSize: '16px',
-                                    borderRadius: '16px',
+                                    padding: isMobile ? '16px 16px 16px 44px' : '20px 20px 20px 50px',
+                                    fontSize: isMobile ? '14px' : '16px',
+                                    borderRadius: isMobile ? '12px' : '16px',
                                     border: '2px solid rgba(102, 126, 234, 0.3)',
                                     outline: 'none',
                                     transition: 'all 0.3s ease',
@@ -178,7 +226,7 @@ export default function App() {
                                 value={q}
                                 onChange={(e) => setQ(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder="Describe what you're looking for... ✨"
+                                placeholder={isMobile ? "What are you looking for? ✨" : "Describe what you're looking for... ✨"}
                                 disabled={loading}
                             />
                         </div>
@@ -187,25 +235,27 @@ export default function App() {
                             onClick={submit}
                             disabled={loading || !q.trim()}
                             style={{
-                                padding: '0 32px',
+                                padding: isMobile ? '0 20px' : '0 32px',
                                 background: loading || !q.trim() ?
                                     'linear-gradient(135deg, #475569 0%, #64748b 100%)' :
                                     'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                 color: 'white',
                                 border: 'none',
-                                borderRadius: '16px',
+                                borderRadius: isMobile ? '12px' : '16px',
                                 cursor: loading || !q.trim() ? 'not-allowed' : 'pointer',
                                 fontWeight: 600,
-                                fontSize: '16px',
+                                fontSize: isMobile ? '14px' : '16px',
                                 transition: 'all 0.3s ease',
-                                minWidth: '140px',
+                                minWidth: isMobile ? '120px' : '140px',
+                                height: isMobile ? '48px' : '52px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '10px',
+                                gap: '8px',
                                 boxShadow: loading || !q.trim() ? 'none' : '0 8px 25px rgba(102, 126, 234, 0.4)',
                                 position: 'relative',
-                                overflow: 'hidden'
+                                overflow: 'hidden',
+                                whiteSpace: 'nowrap'
                             }}
                             onMouseEnter={(e) => {
                                 if (!loading && q.trim()) {
@@ -221,18 +271,18 @@ export default function App() {
                             {loading ? (
                                 <>
                                     <div style={{
-                                        width: '18px',
-                                        height: '18px',
+                                        width: isMobile ? '16px' : '18px',
+                                        height: isMobile ? '16px' : '18px',
                                         border: '2px solid transparent',
                                         borderTop: '2px solid white',
                                         borderRadius: '50%',
                                         animation: 'spin 1s linear infinite'
                                     }}></div>
-                                    <span>Searching</span>
+                                    <span>{isMobile ? '...' : 'Searching'}</span>
                                 </>
                             ) : (
                                 <>
-                                    <span style={{ fontSize: '1.1rem' }}>🚀</span>
+                                    <span style={{ fontSize: isMobile ? '1rem' : '1.1rem' }}>🚀</span>
                                     <span>Search</span>
                                 </>
                             )}
@@ -242,41 +292,44 @@ export default function App() {
                     {/* Enhanced Rerank Toggle */}
                     <div style={{
                         display: 'flex',
+                        flexDirection: isMobile ? 'column' : 'row',
                         alignItems: 'center',
-                        gap: '16px',
+                        gap: isMobile ? '12px' : '16px',
                         justifyContent: 'center',
-                        marginBottom: '30px'
+                        marginBottom: isMobile ? '20px' : '30px'
                     }}>
                         <label style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '12px',
+                            gap: isMobile ? '10px' : '12px',
                             cursor: 'pointer',
                             color: '#cbd5e1',
-                            fontSize: '15px',
+                            fontSize: isMobile ? '14px' : '15px',
                             fontWeight: 500,
-                            padding: '10px 20px',
+                            padding: isMobile ? '8px 16px' : '10px 20px',
                             background: 'rgba(15, 23, 42, 0.6)',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(255, 255, 255, 0.1)'
+                            borderRadius: isMobile ? '10px' : '12px',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            width: isMobile ? '100%' : 'auto',
+                            justifyContent: isMobile ? 'center' : 'flex-start'
                         }}>
                             <div style={{
                                 position: 'relative',
-                                width: '50px',
-                                height: '28px',
+                                width: isMobile ? '44px' : '50px',
+                                height: isMobile ? '24px' : '28px',
                                 background: rerank ?
                                     'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' :
                                     'rgba(71, 85, 105, 0.6)',
-                                borderRadius: '14px',
+                                borderRadius: isMobile ? '12px' : '14px',
                                 transition: 'all 0.3s ease',
                                 boxShadow: rerank ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none'
                             }}>
                                 <div style={{
                                     position: 'absolute',
                                     top: '3px',
-                                    left: rerank ? '25px' : '3px',
-                                    width: '22px',
-                                    height: '22px',
+                                    left: rerank ? (isMobile ? '22px' : '25px') : '3px',
+                                    width: isMobile ? '18px' : '22px',
+                                    height: isMobile ? '18px' : '22px',
                                     background: 'white',
                                     borderRadius: '50%',
                                     transition: 'all 0.3s ease',
@@ -289,21 +342,22 @@ export default function App() {
                                 onChange={(e) => setRerank(e.target.checked)}
                                 style={{ display: 'none' }}
                             />
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontSize: '1.1rem' }}>🧠</span>
-                                AI Smart Ranking
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: isMobile ? '1rem' : '1.1rem' }}>🧠</span>
+                                {isMobile ? 'AI Ranking' : 'AI Smart Ranking'}
                             </span>
                         </label>
                         <div style={{
                             background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(21, 128, 61, 0.2) 100%)',
                             border: '1px solid rgba(34, 197, 94, 0.3)',
                             color: '#86efac',
-                            padding: '8px 16px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: 600
+                            padding: isMobile ? '6px 12px' : '8px 16px',
+                            borderRadius: isMobile ? '10px' : '12px',
+                            fontSize: isMobile ? '11px' : '12px',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap'
                         }}>
-                            +35% Better Results
+                            {isMobile ? '+35% Better' : '+35% Better Results'}
                         </div>
                     </div>
 
@@ -312,16 +366,16 @@ export default function App() {
                         <p style={{
                             textAlign: 'center',
                             color: '#94a3b8',
-                            marginBottom: '16px',
-                            fontSize: '14px'
+                            marginBottom: isMobile ? '12px' : '16px',
+                            fontSize: isMobile ? '13px' : '14px'
                         }}>
                             Try these examples:
                         </p>
                         <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '10px',
-                            justifyContent: 'center'
+                            display: 'grid',
+                            gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+                            gap: isMobile ? '8px' : '10px',
+                            justifyItems: 'center'
                         }}>
                             {exampleQueries.map((example, index) => (
                                 <button
@@ -332,15 +386,18 @@ export default function App() {
                                         background: 'rgba(255, 255, 255, 0.05)',
                                         border: '1px solid rgba(255, 255, 255, 0.1)',
                                         color: '#cbd5e1',
-                                        padding: '10px 16px',
-                                        borderRadius: '12px',
-                                        fontSize: '13px',
+                                        padding: isMobile ? '8px 12px' : '10px 16px',
+                                        borderRadius: isMobile ? '8px' : '12px',
+                                        fontSize: isMobile ? '12px' : '13px',
                                         cursor: loading ? 'not-allowed' : 'pointer',
                                         transition: 'all 0.2s ease',
                                         opacity: loading ? 0.6 : 1,
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '8px'
+                                        gap: '6px',
+                                        width: '100%',
+                                        justifyContent: 'center',
+                                        textAlign: 'left'
                                     }}
                                     onMouseEnter={(e) => {
                                         if (!loading) {
@@ -357,8 +414,14 @@ export default function App() {
                                         }
                                     }}
                                 >
-                                    <span>{example.emoji}</span>
-                                    {example.text}
+                                    <span style={{ flexShrink: 0 }}>{example.emoji}</span>
+                                    <span style={{
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}>
+                                        {example.text}
+                                    </span>
                                 </button>
                             ))}
                         </div>
@@ -370,45 +433,27 @@ export default function App() {
             <div style={{
                 maxWidth: '1400px',
                 margin: '0 auto',
-                padding: '0 20px 60px'
+                padding: responsiveStyles.containerPadding
             }}>
                 {results.length === 0 && !loading && (
-                    <div style={{
-                        textAlign: 'center',
-                        color: '#64748b',
-                        padding: '80px 20px'
-                    }}>
-                        <div style={{
-                            fontSize: '4rem',
-                            marginBottom: '20px',
-                            opacity: 0.5
-                        }}>
-                            🎯
-                        </div>
-                        <h3 style={{
-                            fontSize: '1.5rem',
-                            color: '#cbd5e1',
-                            marginBottom: '12px'
-                        }}>
-                            Ready to Discover Amazing Fashion?
-                        </h3>
-                        <p style={{
-                            fontSize: '1rem',
-                            color: '#94a3b8'
-                        }}>
-                            Describe what you're looking for or try one of the examples above
-                        </p>
-                    </div>
+                    <EmptyState isMobile={isMobile} hasQuery={!!q} />
                 )}
 
                 {results.length > 0 && (
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                        gap: '28px'
+                        gridTemplateColumns: responsiveStyles.gridColumns,
+                        gap: responsiveStyles.gridGap
                     }}>
                         {results.map((r, i) => (
-                            <ProductCard key={i} product={r} index={i} />
+                            <ProductCard
+                                key={i}
+                                product={r}
+                                index={i}
+                                isMobile={isMobile}
+                                imageHeight={responsiveStyles.imageHeight}
+                                cardPadding={responsiveStyles.cardPadding}
+                            />
                         ))}
                     </div>
                 )}
@@ -431,19 +476,67 @@ export default function App() {
                         transform: translateY(0);
                     }
                 }
+
+                /* Mobile optimizations */
+                @media (max-width: 768px) {
+                    input, button {
+                        -webkit-appearance: none;
+                        border-radius: 12px;
+                    }
+                    
+                    /* Improve touch targets */
+                    button {
+                        min-height: 44px;
+                    }
+                }
             `}</style>
         </div>
     )
 }
 
+// Empty State Component
+const EmptyState = ({ isMobile, hasQuery }) => {
+    return (
+        <div style={{
+            textAlign: 'center',
+            color: '#64748b',
+            padding: isMobile ? '60px 20px' : '80px 20px'
+        }}>
+            <div style={{
+                fontSize: isMobile ? '3rem' : '4rem',
+                marginBottom: isMobile ? '16px' : '20px',
+                opacity: 0.5
+            }}>
+                {hasQuery ? '🔍' : '🎯'}
+            </div>
+            <h3 style={{
+                fontSize: isMobile ? '1.3rem' : '1.5rem',
+                color: '#cbd5e1',
+                marginBottom: isMobile ? '8px' : '12px'
+            }}>
+                {hasQuery ? 'No products found' : 'Ready to Discover Amazing Fashion?'}
+            </h3>
+            <p style={{
+                fontSize: isMobile ? '0.9rem' : '1rem',
+                color: '#94a3b8',
+                lineHeight: 1.5
+            }}>
+                {hasQuery
+                    ? 'Try adjusting your search terms or try one of the examples'
+                    : 'Describe what you\'re looking for or try one of the examples above'
+                }
+            </p>
+        </div>
+    )
+}
+
 // Enhanced Product Card Component
-const ProductCard = ({ product, index }) => {
+const ProductCard = ({ product, index, isMobile, imageHeight, cardPadding }) => {
     const [imageLoaded, setImageLoaded] = useState(false)
     const [imageError, setImageError] = useState(false)
 
     const getImageUrl = () => {
         if (!product.raw?.images?.[0]) return null
-
         const images = product.raw.images[0]
         return images.hi_res || images.large || images.thumb
     }
@@ -454,8 +547,8 @@ const ProductCard = ({ product, index }) => {
         <div style={{
             background: 'rgba(30, 41, 59, 0.6)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '20px',
-            padding: '24px',
+            borderRadius: isMobile ? '16px' : '20px',
+            padding: cardPadding,
             backdropFilter: 'blur(10px)',
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             position: 'relative',
@@ -465,23 +558,27 @@ const ProductCard = ({ product, index }) => {
             animationFillMode: 'both'
         }}
              onMouseEnter={(e) => {
-                 e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)'
-                 e.currentTarget.style.background = 'rgba(30, 41, 59, 0.8)'
-                 e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(102, 126, 234, 0.3)'
+                 if (!isMobile) {
+                     e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)'
+                     e.currentTarget.style.background = 'rgba(30, 41, 59, 0.8)'
+                     e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(102, 126, 234, 0.3)'
+                 }
              }}
              onMouseLeave={(e) => {
-                 e.currentTarget.style.transform = 'translateY(0) scale(1)'
-                 e.currentTarget.style.background = 'rgba(30, 41, 59, 0.6)'
-                 e.currentTarget.style.boxShadow = 'none'
+                 if (!isMobile) {
+                     e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                     e.currentTarget.style.background = 'rgba(30, 41, 59, 0.6)'
+                     e.currentTarget.style.boxShadow = 'none'
+                 }
              }}
         >
             {/* Product Image */}
             {imageUrl && (
                 <div style={{
                     width: '100%',
-                    height: '220px',
-                    marginBottom: '20px',
-                    borderRadius: '16px',
+                    height: imageHeight,
+                    marginBottom: isMobile ? '16px' : '20px',
+                    borderRadius: isMobile ? '12px' : '16px',
                     overflow: 'hidden',
                     background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
                     position: 'relative'
@@ -512,18 +609,18 @@ const ProductCard = ({ product, index }) => {
                             justifyContent: 'center',
                             background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
                             color: '#475569',
-                            fontSize: '14px'
+                            fontSize: isMobile ? '12px' : '14px'
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <div style={{
-                                    width: '16px',
-                                    height: '16px',
+                                    width: isMobile ? '14px' : '16px',
+                                    height: isMobile ? '14px' : '16px',
                                     border: '2px solid #475569',
                                     borderTop: '2px solid #64748b',
                                     borderRadius: '50%',
                                     animation: 'spin 1s linear infinite'
                                 }}></div>
-                                Loading image...
+                                Loading...
                             </div>
                         </div>
                     )}
@@ -534,15 +631,15 @@ const ProductCard = ({ product, index }) => {
             <div style={{ flex: 1 }}>
                 <h3 style={{
                     fontWeight: 600,
-                    fontSize: '16px',
-                    marginBottom: '12px',
+                    fontSize: isMobile ? '14px' : '16px',
+                    marginBottom: isMobile ? '10px' : '12px',
                     color: '#f1f5f9',
                     lineHeight: 1.4,
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
-                    minHeight: '44px'
+                    minHeight: isMobile ? '40px' : '44px'
                 }}>
                     {product.title || product.raw?.title || 'No title available'}
                 </h3>
@@ -552,16 +649,19 @@ const ProductCard = ({ product, index }) => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '16px'
+                    marginBottom: isMobile ? '12px' : '16px',
+                    flexWrap: 'wrap',
+                    gap: '8px'
                 }}>
                     {(product.price || product.raw?.price) && (
                         <div style={{
                             color: '#10b981',
                             fontWeight: 700,
-                            fontSize: '20px',
+                            fontSize: isMobile ? '18px' : '20px',
                             background: 'rgba(16, 185, 129, 0.1)',
-                            padding: '6px 12px',
-                            borderRadius: '8px'
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            whiteSpace: 'nowrap'
                         }}>
                             ${product.price || product.raw?.price}
                         </div>
@@ -570,12 +670,13 @@ const ProductCard = ({ product, index }) => {
                         <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
+                            gap: '4px',
                             color: '#f59e0b',
                             fontWeight: 600,
                             background: 'rgba(245, 158, 11, 0.1)',
-                            padding: '6px 12px',
-                            borderRadius: '8px'
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            whiteSpace: 'nowrap'
                         }}>
                             <span>⭐</span>
                             <span>{product.rating || product.raw?.average_rating}</span>
@@ -591,9 +692,9 @@ const ProductCard = ({ product, index }) => {
                         gap: '6px',
                         background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)',
                         color: '#c7d2fe',
-                        padding: '6px 12px',
+                        padding: '4px 10px',
                         borderRadius: '20px',
-                        fontSize: '12px',
+                        fontSize: isMobile ? '11px' : '12px',
                         fontWeight: 600,
                         marginBottom: '12px',
                         border: '1px solid rgba(102, 126, 234, 0.3)'
@@ -606,7 +707,7 @@ const ProductCard = ({ product, index }) => {
                 {/* Description */}
                 {product.raw?.description && Array.isArray(product.raw.description) && product.raw.description.length > 0 && (
                     <p style={{
-                        fontSize: '14px',
+                        fontSize: isMobile ? '13px' : '14px',
                         color: '#94a3b8',
                         lineHeight: 1.5,
                         display: '-webkit-box',
