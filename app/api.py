@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from app.indexer import search
 
-app = FastAPI(title="Semantic Recommender", version="0.1")
+app = FastAPI(title="Vector Vogue", version="0.1")
 
 class Query(BaseModel):
     q: str

@@ -106,7 +106,7 @@ export default function App() {
                         lineHeight: 1.2,
                         wordWrap: 'break-word'
                     }}>
-                        {isMobile ? '✨ StyleSense' : '✨ StyleSense AI'}
+                        {isMobile ? '✨ Vector Vogue' : '✨ Vector Vogue AI'}
                     </h1>
                     <p style={{
                         fontSize: isMobile ? '1.1rem' : '1.3rem',
@@ -272,7 +272,6 @@ export default function App() {
                                 </>
                             ) : (
                                 <>
-                                    <span style={{ fontSize: isMobile ? '1rem' : '1.1rem' }}>🚀</span>
                                     <span>Search</span>
                                 </>
                             )}
@@ -353,7 +352,7 @@ export default function App() {
                         </div>
                     </div>
 
-                    {/* Example Queries - FIXED */}
+                    {/* Example Queries - FIXED */}{/*
                     <div style={{ width: '100%' }}>
                         <p style={{
                             textAlign: 'center',
@@ -419,7 +418,7 @@ export default function App() {
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
 
