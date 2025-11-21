@@ -8,10 +8,14 @@ import faiss
 import numpy as np
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
+from PIL import Image
+import base64
+from io import BytesIO
 
 # Configure logging
 logger = logging.getLogger(__name__)
 load_dotenv()
+
 
 class EnhancedSentenceTransformer:
     """Enhanced embedding model with performance optimizations"""
@@ -37,7 +41,8 @@ class EnhancedSentenceTransformer:
                     )
 
                     load_time = time.time() - start_time
-                    logger.info(f"Model loaded in {load_time:.2f}s - Dimension: {cls._model.get_sentence_embedding_dimension()}")
+                    logger.info(
+                        f"Model loaded in {load_time:.2f}s - Dimension: {cls._model.get_sentence_embedding_dimension()}")
 
         return cls._model
 
@@ -112,6 +117,7 @@ class EnhancedSentenceTransformer:
             'quality_score': (total_words / max(len(texts) * 10, 1))  # Simple quality metric
         }
 
+
 class EmbeddingPerformanceTracker:
     """Track embedding performance and optimize accordingly"""
 
@@ -135,7 +141,7 @@ class EmbeddingPerformanceTracker:
         self.stats['avg_processing_time'] = sum(self.batch_times) / len(self.batch_times)
 
         logger.debug(f"Batch processed: {batch_size} texts in {processing_time:.3f}s "
-                     f"({batch_size/processing_time:.1f} texts/sec)")
+                     f"({batch_size / processing_time:.1f} texts/sec)")
 
     def get_optimal_batch_size(self) -> int:
         """Dynamically determine optimal batch size"""
@@ -148,12 +154,38 @@ class EmbeddingPerformanceTracker:
         if avg_time < 1.0 and avg_batch < 100:
             return min(int(avg_batch * 1.5), 128)  # Increase gradually
         elif avg_time > 5.0:
-            return max(int(avg_batch * 0.7), 16)   # Decrease if too slow
+            return max(int(avg_batch * 0.7), 16)  # Decrease if too slow
         else:
             return 64  # Stable default
 
+
+class ImageEmbeddingModel:
+    _model = None
+    _lock = threading.Lock()
+    _model_name = "clip-ViT-B-32"  # 512-dim
+
+    @classmethod
+    def get_model(cls):
+        if cls._model is None:
+            with cls._lock:
+                if cls._model is None:
+                    logger.info(f"Loading Image CLIP model: {cls._model_name}")
+                    cls._model = SentenceTransformer(cls._model_name)
+        return cls._model
+
+    @staticmethod
+    def decode_base64_image(base64_str):
+        try:
+            img_bytes = base64.b64decode(base64_str)
+            img = Image.open(BytesIO(img_bytes)).convert("RGB")
+            return img
+        except Exception as e:
+            raise ValueError(f"Invalid image data: {e}")
+
+
 # Global performance tracker
 performance_tracker = EmbeddingPerformanceTracker()
+
 
 @lru_cache(maxsize=1000)
 def embed_single_text_cached(text: str) -> List[float]:
@@ -164,6 +196,7 @@ def embed_single_text_cached(text: str) -> List[float]:
     model = EnhancedSentenceTransformer.get_model()
     embedding = model.encode([text], show_progress_bar=False, convert_to_numpy=True)
     return embedding[0].tolist()
+
 
 def embed_texts(
         texts: List[str],
@@ -272,7 +305,7 @@ def embed_texts(
 
         total_time = time.time() - start_time
         logger.info(f"Embedding completed: {len(texts)} texts in {total_time:.2f}s "
-                    f"({len(texts)/total_time:.1f} texts/sec)")
+                    f"({len(texts) / total_time:.1f} texts/sec)")
 
         return all_embeddings
 
@@ -289,10 +322,12 @@ def embed_texts(
         )
         return fallback_embeddings.tolist()
 
+
 def get_embedding_dimension() -> int:
     """Get the dimension of embeddings"""
     model = EnhancedSentenceTransformer.get_model()
     return model.get_sentence_embedding_dimension()
+
 
 def validate_embeddings(embeddings: List[List[float]]) -> bool:
     """Validate that embeddings are correct"""
@@ -311,10 +346,25 @@ def validate_embeddings(embeddings: List[List[float]]) -> bool:
 
     return True
 
+
 # Utility function for single text embedding
 def embed_text(text: str, normalize: bool = True) -> List[float]:
     """Convenience function for embedding single text"""
     return embed_texts([text], normalize=normalize)[0]
+
+
+def embed_image(base64_image: str, normalize: bool = True) -> List[float]:
+    model = ImageEmbeddingModel.get_model()
+
+    img = ImageEmbeddingModel.decode_base64_image(base64_image)
+
+    embedding = model.encode([img], convert_to_numpy=True)[0]
+
+    if normalize:
+        embedding = embedding / np.linalg.norm(embedding)
+
+    return embedding.tolist()
+
 
 # Performance monitoring endpoint
 def get_embedding_stats() -> dict:
@@ -323,6 +373,7 @@ def get_embedding_stats() -> dict:
     stats['embedding_dimension'] = get_embedding_dimension()
     stats['cache_info'] = embed_single_text_cached.cache_info()
     return stats
+
 
 # Pre-warm the model (optional, for production)
 def prewarm_model():
